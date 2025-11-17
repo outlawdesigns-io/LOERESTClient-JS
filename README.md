@@ -196,14 +196,3 @@ await api.auth.clientCredentialFlow(oauthScope, [apiUrl]);
 
 Maintained by **Outlaw Designs**
 [https://github.com/outlawdesigns-io](https://github.com/outlawdesigns-io)
-
----
-
-If you'd like this delivered as a **downloadable README.md file**, or want:
-
-* “Advanced Usage” examples
-* “Model Coverage Matrix”
-* Flow diagrams
-* TypeScript types
-
-—just let me know!
