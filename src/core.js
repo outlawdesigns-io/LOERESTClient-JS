@@ -9,37 +9,29 @@ import createMovies from './models/movie.js';
 import createSongs from './models/song.js';
 
 export function createApiClient(baseURL, requestedScope){
-  const oauthScope = requestedScope; //the scope(s) for this app
+  const oauthScope = requestedScope;
   const oauthResource = baseURL;
   const oauthRefreshBuffer = 300;
+  let oauthTokenExpiryTime;
   const axiosInstance = axios.create({baseURL:baseURL});
   authClient.onTokenUpdate((token)=>{
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    let tmpDate = new Date();
+    let secondsToAdd = token.expires_in;
+    tmpDate.setSeconds(tmpDate.getSeconds() + secondsToAdd);
+    oauthTokenExpiryTime = tmpDate.getSeconds();
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token.access_token}`;
   });
   axiosInstance.interceptors.request.use(async (config)=>{
     const token = authClient.getAccessToken();
     if(!token) throw new Error(`Authenticate before making API calls.`);
     const refreshToken = authClient.getRefreshToken();
-    let user;
-    if(refreshToken){
-      try{
-        user = await authClient.verifyAccessToken(token,[oauthResource]);
-      }catch(err){
-        console.log(err);
-        return;
-      }
+    if(refreshToken && oauthTokenExpiryTime){
       const now = Math.floor(Date.now() / 1000);
-      const timeDiffSeconds = user.exp - now;
-      if(timeDiffSeconds <= oauthRefreshBuffer){
-        try{
-          await authClient.refreshToken(oauthScope,[oauthResource]);
-        }catch(err){
-          console.log(err);
-          return;
-        }
+      const timeDiffSeconds = oauthTokenExpiryTime - now;
+      if(timeDiffSeconds <= oauthRefreshBuffer || now >= oauthTokenExpiryTime){
+        await authClient.refreshToken(oauthScope,[oauthResource]);
       }
     }
-    config.headers['Authorization'] = `Bearer ${authClient.getAccessToken()}`;
     return config;
   });
   return {
