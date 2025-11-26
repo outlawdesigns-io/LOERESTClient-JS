@@ -2,14 +2,14 @@ import { createApiClient } from './core.js';
 
 let instance = null;
 
-function init(baseURL){
+function init(baseURL, oauthScope){
   if(instance){
     if(instance.axios.defaults.baseURL !== baseURL){
       throw new Error(`API client already initialized with ${instance.axios.defaults.baseURL}`);
     }
     return instance;
   }
-  instance = createApiClient(baseURL);
+  instance = createApiClient(baseURL, oauthScope);
   return instance;
 }
 
