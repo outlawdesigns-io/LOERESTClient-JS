@@ -8,26 +8,36 @@ import createHoldingbay from './models/holdingBay.js';
 import createMovies from './models/movie.js';
 import createSongs from './models/song.js';
 
+
 export function createApiClient(baseURL, requestedScope){
   const oauthScope = requestedScope;
   const oauthResource = baseURL;
-  const oauthRefreshBuffer = 300;
   const axiosInstance = axios.create({baseURL:baseURL});
-  authClient.onTokenUpdate((token)=>{
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token.access_token}`;
+  let onRefreshCallback;
+  authClient.onTokenUpdate((tokenSet)=>{
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${tokenSet.access_token}`;
+    if(onRefreshCallback){
+      onRefreshCallback(tokenSet);
+    }
   });
   axiosInstance.interceptors.request.use(async (config)=>{
-    const token = authClient.getAccessToken();
+    let token = authClient.getAccessToken();
     if(!token) throw new Error(`Authenticate before making API calls.`);
-    const user = await authClient.verifyAccessToken(token,[oauthResource]);
-    const refreshToken = authClient.getRefreshToken();
-    const now = Math.floor(Date.now() / 1000);
-    const timeDiffSeconds = user.exp - now;
-    if(timeDiffSeconds <= oauthRefreshBuffer){
-      if(refreshToken){
-        await authClient.refreshToken(oauthScope,[oauthResource]);
+    let user;
+    try{
+      user = await authClient.verifyAccessToken(token,[oauthResource]);
+    }catch(err){
+      if(err.code === 'ERR_JWT_EXPIRED'){
+        const refreshToken = authClient.getRefreshToken();
+        if(refreshToken){
+          await authClient.refreshToken(oauthScope,[oauthResource]);
+        }else{
+          await authClient.clientCredentialFlow(oauthScope,[oauthResource]);
+        }
+        token = authClient.getAccessToken();
+        config.headers['Authorization'] = `Bearer ${token}`;
       }else{
-        await authClient.clientCredentialFlow(oauthScope,[oauthResource]);
+        throw err;
       }
     }
     return config;
@@ -39,6 +49,9 @@ export function createApiClient(baseURL, requestedScope){
     holdingBay:createHoldingbay(axiosInstance),
     episodes:createEpisodes(axiosInstance),
     docs:createDocs(axiosInstance),
-    anime:createAnime(axiosInstance)
+    anime:createAnime(axiosInstance),
+    onRefresh(cb){
+      onRefreshCallback = cb;
+    }
   }
 }
