@@ -13,10 +13,5 @@
   "dependencies": {
     "@outlawdesigns/authenticationclient": "^2.1.2",
     "axios": "^1.13.2"
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.28.3",
-    "@babel/core": "^7.28.5",
-    "@babel/preset-env": "^7.28.5"
   }
 }
