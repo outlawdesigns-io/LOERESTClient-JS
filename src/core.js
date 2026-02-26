@@ -7,6 +7,7 @@ import createEpisodes from './models/episode.js';
 import createHoldingbay from './models/holdingBay.js';
 import createMovies from './models/movie.js';
 import createSongs from './models/song.js';
+import createComics from './models/comic.js';
 
 
 export function createApiClient(baseURL, requestedScope){
@@ -50,6 +51,7 @@ export function createApiClient(baseURL, requestedScope){
     episodes:createEpisodes(axiosInstance),
     docs:createDocs(axiosInstance),
     anime:createAnime(axiosInstance),
+    comics:createComics(axiosInstance),
     onRefresh(cb){
       onRefreshCallback = cb;
     }
